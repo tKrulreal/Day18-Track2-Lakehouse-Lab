@@ -2,6 +2,15 @@
 # jupyter:
 #   jupytext:
 #     formats: py:percent
+#     text_representation:
+#       extension: .py
+#       format_name: percent
+#       format_version: '1.3'
+#       jupytext_version: 1.19.5
+#   kernelspec:
+#     display_name: Python 3 (ipykernel)
+#     language: python
+#     name: python3
 # ---
 
 # %% [markdown]
@@ -473,3 +482,7 @@ for k, v in checks.items():
     print(f"  [{'PASS' if v else 'FAIL'}] {k}")
 assert all(checks.values()), "NB8 incomplete — see FAIL rows above"
 print("\nNB8 complete.")
+
+# %%
+
+# %%

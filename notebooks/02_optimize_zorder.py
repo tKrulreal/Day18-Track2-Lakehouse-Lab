@@ -2,6 +2,15 @@
 # jupyter:
 #   jupytext:
 #     formats: py:percent
+#     text_representation:
+#       extension: .py
+#       format_name: percent
+#       format_version: '1.3'
+#       jupytext_version: 1.19.5
+#   kernelspec:
+#     display_name: Python 3 (ipykernel)
+#     language: python
+#     name: python3
 # ---
 
 # %% [markdown]
@@ -176,3 +185,7 @@ print(f"\n  (speedup={speedup:.1f}x, pruning={pruned_ratio:.1f}x — the slide a
 print("   wall-clock is noisy on a laptop, which is why file-pruning is the fallback.)")
 assert all(checks.values()), "NB2 incomplete — see FAIL rows above"
 print("\nNB2 complete.")
+
+# %%
+
+# %%

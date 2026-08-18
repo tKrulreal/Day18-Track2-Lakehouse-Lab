@@ -63,6 +63,9 @@ def _catalog_dir(name: str) -> Path:
     return ICEBERG_ROOT / name
 
 
+_OPEN_CATALOGS: dict[str, list[object]] = {}
+
+
 def catalog(name: str = "lab"):
     """Return a local Iceberg catalog, isolated under its own directory.
 
@@ -79,11 +82,13 @@ def catalog(name: str = "lab"):
 
     d = _catalog_dir(name)
     (d / "warehouse").mkdir(parents=True, exist_ok=True)
-    return SqlCatalog(
+    cat = SqlCatalog(
         name,
         uri=f"sqlite:///{d / 'catalog.db'}",
         warehouse=f"file://{d / 'warehouse'}",
     )
+    _OPEN_CATALOGS.setdefault(name, []).append(cat)
+    return cat
 
 
 def reset_catalog(name: str = "lab") -> None:
@@ -92,8 +97,37 @@ def reset_catalog(name: str = "lab") -> None:
     Scoped to `name` on purpose — see `_catalog_dir`.
     """
     import shutil
+    import sqlite3
 
-    shutil.rmtree(_catalog_dir(name), ignore_errors=True)
+    for cat in _OPEN_CATALOGS.pop(name, []):
+        if hasattr(cat, "engine"):
+            try:
+                cat.engine.dispose()
+            except Exception:
+                pass
+
+    d = _catalog_dir(name)
+    shutil.rmtree(d / "warehouse", ignore_errors=True)
+    db_file = d / "catalog.db"
+    try:
+        if db_file.exists():
+            db_file.unlink()
+    except Exception:
+        # File is locked by another process (e.g. Jupyter kernel on Windows).
+        # Clean the SQLite tables directly so the catalog is empty and clean.
+        try:
+            conn = sqlite3.connect(str(db_file), timeout=5.0)
+            cursor = conn.cursor()
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+            tables = cursor.fetchall()
+            for (tbl_name,) in tables:
+                cursor.execute(f"DROP TABLE IF EXISTS {tbl_name};")
+            conn.commit()
+            conn.close()
+        except Exception:
+            pass
+
+    shutil.rmtree(d, ignore_errors=True)
 
 
 def namespace(cat, ns: str = "lake"):
